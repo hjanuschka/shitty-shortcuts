@@ -27,7 +27,7 @@ into my terminal?"* Yes. Yes it can.
 Any CH57x-based macro keypad works. I use this 6-button + 1-knob one
 (~15 EUR): [6-key + knob macro keypad on Amazon](https://www.amazon.de/dp/B0D73TXFD8?ref=ppx_yo2ov_dt_b_fed_asin_title)
 
-![keypad](https://raw.githubusercontent.com/kriomant/ch57x-keyboard-tool/master/doc/keyboard-12-2.png)
+![keypad](doc/keypad.jpg)
 
 ### Program the keypad (one time only!)
 
