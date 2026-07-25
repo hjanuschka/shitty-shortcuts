@@ -218,7 +218,40 @@ enum API {
             }
             return 1
         }
+        // Returns the mic chosen in the menubar (if set and currently
+        // connected), else nil - config rules decide the fallback.
+        vm.setField("selectedInput") { vm in
+            if let chosen = UserDefaults.standard.string(forKey: "micDevice"),
+               AudioDevices.inputDeviceNames().contains(chosen) {
+                vm.push(chosen)
+            } else {
+                vm.pushNil()
+            }
+            return 1
+        }
         lua_setfield(L, -2, "audiodevice")
+
+        // ---- ss.settings (UserDefaults-backed key/value store) ----
+        vm.beginTable()
+        vm.setField("get") { vm in
+            guard let key = vm.string(at: 1),
+                  let value = UserDefaults.standard.string(forKey: "lua." + key) else {
+                vm.pushNil()
+                return 1
+            }
+            vm.push(value)
+            return 1
+        }
+        vm.setField("set") { vm in
+            guard let key = vm.string(at: 1) else { return 0 }
+            if let value = vm.string(at: 2) {
+                UserDefaults.standard.set(value, forKey: "lua." + key)
+            } else {
+                UserDefaults.standard.removeObject(forKey: "lua." + key)
+            }
+            return 0
+        }
+        lua_setfield(L, -2, "settings")
 
         // ---- ss.json ----
         vm.beginTable()

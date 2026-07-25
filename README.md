@@ -18,7 +18,8 @@ into my terminal?"* Yes. Yes it can.
   ⌘S saves and hot-reloads
 - **HUD alerts** - stacking, Hammerspoon-style on-screen messages
 - **Process spawning** with exit-code/stdout callbacks
-- **Audio device enumeration** (pick the right mic for voice input)
+- **Audio device enumeration** + **menubar mic picker** - choose the voice
+  input device from the menu, or define preference rules in Lua
 - **JSON decoding** (parse `kitten @ ls` and friends)
 
 ## The hardware
@@ -138,6 +139,8 @@ Everything lives under the global `ss` (aliased as `hs`):
 | `ss.timer.secondsSinceEpoch()` | high-resolution clock |
 | `ss.application.launchOrFocus(name)` | activate or launch an app |
 | `ss.audiodevice.inputDeviceNames()` | list audio input device names |
+| `ss.audiodevice.selectedInput()` | mic chosen in menubar > Microphone (nil if unset/disconnected) |
+| `ss.settings.get(key)` / `ss.settings.set(key, value)` | persistent key/value store (UserDefaults) |
 | `ss.json.decode(str)` | JSON → Lua table |
 | `ss.fs.glob(dir, regex)` | list matching files, newest first |
 | `ss.fs.remove(path)` | delete a file |

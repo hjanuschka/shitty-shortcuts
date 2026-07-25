@@ -65,14 +65,23 @@ local whisperModel = os.getenv("HOME") .. "/models/whisper/ggml-small.en.bin"
 local recTask = nil
 local recFile = "/tmp/shitty-voice.wav"
 
+-- mic preference rules (lua patterns, first match wins).
+-- A device picked in menubar > Microphone always takes priority.
+local micRules = { "sony", "wf%-1000", "airpods", "headset" }
+local micFallback = "MacBook Pro Microphone" -- list yours: ss.audiodevice.inputDeviceNames()
+
 local function pickMic()
-  -- prefer a headset/earbud mic over the builtin; adjust to your devices
+  -- 1. explicit menubar selection (only if currently connected)
+  local selected = ss.audiodevice.selectedInput()
+  if selected then return selected end
+  -- 2. preference rules
   for _, name in ipairs(ss.audiodevice.inputDeviceNames()) do
-    if name:lower():find("sony") or name:lower():find("airpods") then
-      return name
+    for _, rule in ipairs(micRules) do
+      if name:lower():find(rule) then return name end
     end
   end
-  return "MacBook Pro Microphone" -- check yours with ss.audiodevice.inputDeviceNames()
+  -- 3. fallback
+  return micFallback
 end
 
 local function transcribeAndSend()
