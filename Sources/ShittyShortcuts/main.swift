@@ -21,9 +21,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var profileMenuItem: NSMenuItem!
 
     // -- profiles --------------------------------------------------------------
+    // Two sources merge: config-declared (ss.profile.add) and user-created
+    // (menubar "New Profile...", persisted in UserDefaults).
 
-    private(set) var profiles: [String] = []
+    private var luaProfiles: [String] = []
     var profileChangeHandlers: [(String) -> Void] = []
+
+    private var userProfiles: [String] {
+        get { UserDefaults.standard.stringArray(forKey: "userProfiles") ?? [] }
+        set { UserDefaults.standard.set(newValue, forKey: "userProfiles") }
+    }
+
+    var profiles: [String] {
+        var seen = Set<String>()
+        return (luaProfiles + userProfiles).filter { seen.insert($0).inserted }
+    }
 
     var activeProfile: String {
         get { UserDefaults.standard.string(forKey: "activeProfile") ?? profiles.first ?? "default" }
@@ -31,35 +43,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func resetProfiles() {
-        profiles.removeAll()
+        luaProfiles.removeAll()
         profileChangeHandlers.removeAll()
-        profileMenuItem.submenu?.removeAllItems()
-        profileMenuItem.isHidden = true
     }
 
     func addProfile(_ name: String) {
-        guard !profiles.contains(name) else { return }
-        profiles.append(name)
-        profileMenuItem.isHidden = false
-        let item = ClosureMenuItem(title: name, action: #selector(ClosureMenuItem.invoke(_:)), keyEquivalent: "")
-        item.target = item
-        item.handler = { [weak self] in self?.switchProfile(to: name) }
-        profileMenuItem.submenu?.addItem(item)
-        refreshProfileChecks()
+        guard !luaProfiles.contains(name) else { return }
+        luaProfiles.append(name)
     }
 
     func switchProfile(to name: String, announce: Bool = true) {
         guard profiles.contains(name) else { return }
         activeProfile = name
-        refreshProfileChecks()
         for handler in profileChangeHandlers { handler(name) }
         if announce { Alert.show("profile: " + name, duration: 1.2) }
     }
 
-    private func refreshProfileChecks() {
-        for case let item as NSMenuItem in profileMenuItem.submenu?.items ?? [] {
-            item.state = item.title == activeProfile ? .on : .off
+    @objc func newProfileAction() {
+        let alert = NSAlert()
+        alert.messageText = "New Profile"
+        alert.informativeText = "Name for the new profile. Your Lua config can dispatch on it via ss.profile.current()."
+        alert.addButton(withTitle: "Create")
+        alert.addButton(withTitle: "Cancel")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        field.placeholderString = "e.g. meeting, streaming, gaming"
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        NSApp.activate(ignoringOtherApps: true)
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let name = field.stringValue.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, !profiles.contains(name) else { return }
+        userProfiles.append(name)
+        switchProfile(to: name)
+    }
+
+    @objc func deleteProfileAction() {
+        let name = activeProfile
+        guard userProfiles.contains(name) else {
+            Alert.show("'" + name + "' is defined by the config - remove it there")
+            return
         }
+        userProfiles.removeAll { $0 == name }
+        if let fallback = profiles.first { switchProfile(to: fallback) }
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -71,6 +96,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         profileMenuItem = NSMenuItem(title: "Profile", action: nil, keyEquivalent: "")
         let profileMenu = NSMenu(title: "Profile")
+        profileMenu.delegate = self
         profileMenuItem.submenu = profileMenu
         menu.addItem(profileMenuItem)
         menu.addItem(.separator())
@@ -159,8 +185,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 extension AppDelegate: NSMenuDelegate {
-    // Rebuild the mic list every time the submenu opens (devices come and go).
     func menuNeedsUpdate(_ menu: NSMenu) {
+        if menu.title == "Profile" {
+            menu.removeAllItems()
+            for name in profiles {
+                let item = ClosureMenuItem(title: name, action: #selector(ClosureMenuItem.invoke(_:)), keyEquivalent: "")
+                item.target = item
+                item.handler = { [weak self] in self?.switchProfile(to: name) }
+                item.state = name == activeProfile ? .on : .off
+                menu.addItem(item)
+            }
+            if !profiles.isEmpty { menu.addItem(.separator()) }
+            let newItem = NSMenuItem(title: "New Profile...", action: #selector(newProfileAction), keyEquivalent: "")
+            newItem.target = self
+            menu.addItem(newItem)
+            if userProfiles.contains(activeProfile) {
+                let del = NSMenuItem(title: "Delete \u{201C}" + activeProfile + "\u{201D}", action: #selector(deleteProfileAction), keyEquivalent: "")
+                del.target = self
+                menu.addItem(del)
+            }
+            return
+        }
         guard menu.title == "Microphone" else { return }
         menu.removeAllItems()
         let chosen = UserDefaults.standard.string(forKey: "micDevice")
