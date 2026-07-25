@@ -121,6 +121,15 @@ ss.hotkey.bind(hyper, "1", function()
 end)
 ```
 
+### Micro mode: a $17 control surface for the pi coding agent
+
+Flip the keypad's hardware layer switch and the same 6 buttons become a
+remote control for [pi](https://pi.dev) running in zellij over ssh:
+interrupt, submit, model picker (knob-navigated!), thinking level,
+tool output - and hold-to-talk voice dictation straight into pi's editor.
+
+See [examples/pi-micro-mode.lua](examples/pi-micro-mode.lua).
+
 More in [examples/](examples/).
 
 ## API reference

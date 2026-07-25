@@ -1,10 +1,6 @@
-# Example mapping for a 6-button + 1-knob CH57x macro keypad,
-# programmed once with https://github.com/kriomant/ch57x-keyboard-tool:
-#
-#   ch57x-keyboard-tool upload < ch57x-keypad.yaml
-#
-# Every button sends a "hyper" chord (cmd+ctrl+alt+shift+N) that no human
-# would ever type - shitty-shortcuts listens for those globally.
+# ch57x keypad: layer 1 = desktop mode, layer 2 = "micro mode" (pi.dev
+# control surface), layer 3 = spare copy of layer 1.
+# Switch layers with the side button on the keypad.
 model: ch57x-2
 orientation: normal
 rows: 3
@@ -12,6 +8,7 @@ columns: 2
 knobs: 1
 
 layers:
+  # layer 1: desktop mode (kitty/zellij tabs, chrome, voice)
   - buttons:
       - ["cmd-ctrl-alt-shift-1", "cmd-ctrl-alt-shift-2"]
       - ["cmd-ctrl-alt-shift-3", "cmd-ctrl-alt-shift-4"]
@@ -21,15 +18,17 @@ layers:
         press: "cmd-ctrl-alt-shift-9"
         cw: "volumeup"
 
+  # layer 2: micro mode - pi.dev remote control
   - buttons:
-      - ["cmd-ctrl-alt-shift-1", "cmd-ctrl-alt-shift-2"]
-      - ["cmd-ctrl-alt-shift-3", "cmd-ctrl-alt-shift-4"]
-      - ["cmd-ctrl-alt-shift-5", "cmd-ctrl-alt-shift-6"]
+      - ["cmd-ctrl-alt-shift-q", "cmd-ctrl-alt-shift-w"]
+      - ["cmd-ctrl-alt-shift-e", "cmd-ctrl-alt-shift-r"]
+      - ["cmd-ctrl-alt-shift-t", "cmd-ctrl-alt-shift-y"]
     knobs:
-      - ccw: "volumedown"
-        press: "cmd-ctrl-alt-shift-9"
-        cw: "volumeup"
+      - ccw: "cmd-ctrl-alt-shift-7"
+        press: "cmd-ctrl-alt-shift-0"
+        cw: "cmd-ctrl-alt-shift-8"
 
+  # layer 3: spare (same as layer 1)
   - buttons:
       - ["cmd-ctrl-alt-shift-1", "cmd-ctrl-alt-shift-2"]
       - ["cmd-ctrl-alt-shift-3", "cmd-ctrl-alt-shift-4"]
