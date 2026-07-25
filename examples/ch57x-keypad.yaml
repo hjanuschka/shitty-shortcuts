@@ -1,0 +1,40 @@
+# Example mapping for a 6-button + 1-knob CH57x macro keypad,
+# programmed once with https://github.com/kriomant/ch57x-keyboard-tool:
+#
+#   ch57x-keyboard-tool upload < ch57x-keypad.yaml
+#
+# Every button sends a "hyper" chord (cmd+ctrl+alt+shift+N) that no human
+# would ever type - shitty-shortcuts listens for those globally.
+model: ch57x-2
+orientation: normal
+rows: 3
+columns: 2
+knobs: 1
+
+layers:
+  - buttons:
+      - ["cmd-ctrl-alt-shift-1", "cmd-ctrl-alt-shift-2"]
+      - ["cmd-ctrl-alt-shift-3", "cmd-ctrl-alt-shift-4"]
+      - ["cmd-ctrl-alt-shift-5", "cmd-ctrl-alt-shift-6"]
+    knobs:
+      - ccw: "volumedown"
+        press: "cmd-ctrl-alt-shift-9"
+        cw: "volumeup"
+
+  - buttons:
+      - ["cmd-ctrl-alt-shift-1", "cmd-ctrl-alt-shift-2"]
+      - ["cmd-ctrl-alt-shift-3", "cmd-ctrl-alt-shift-4"]
+      - ["cmd-ctrl-alt-shift-5", "cmd-ctrl-alt-shift-6"]
+    knobs:
+      - ccw: "volumedown"
+        press: "cmd-ctrl-alt-shift-9"
+        cw: "volumeup"
+
+  - buttons:
+      - ["cmd-ctrl-alt-shift-1", "cmd-ctrl-alt-shift-2"]
+      - ["cmd-ctrl-alt-shift-3", "cmd-ctrl-alt-shift-4"]
+      - ["cmd-ctrl-alt-shift-5", "cmd-ctrl-alt-shift-6"]
+    knobs:
+      - ccw: "volumedown"
+        press: "cmd-ctrl-alt-shift-9"
+        cw: "volumeup"
