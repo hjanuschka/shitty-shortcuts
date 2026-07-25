@@ -1,3 +1,5 @@
 .build/
 *.xcodeproj
 .DS_Store
+shitty-shortcuts.app/
+*.zip
