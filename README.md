@@ -16,6 +16,8 @@ into my terminal?"* Yes. Yes it can.
   Hammerspoon-compatible API (`ss.*`, aliased as `hs.*`)
 - **Built-in config editor** - dark theme, Lua syntax highlighting,
   ⌘S saves and hot-reloads
+- **Profiles** - same buttons, different meanings (desktop vs pi-control),
+  switchable from the menubar, persisted, with Lua change hooks
 - **HUD alerts** - stacking, Hammerspoon-style on-screen messages
 - **Process spawning** with exit-code/stdout callbacks
 - **Audio device enumeration** + **menubar mic picker** - choose the voice
@@ -150,6 +152,11 @@ Everything lives under the global `ss` (aliased as `hs`):
 | `ss.audiodevice.inputDeviceNames()` | list audio input device names |
 | `ss.audiodevice.selectedInput()` | mic chosen in menubar > Microphone (nil if unset/disconnected) |
 | `ss.settings.get(key)` / `ss.settings.set(key, value)` | persistent key/value store (UserDefaults) |
+| `ss.profile.add(name)` | register a profile (shows up in menubar > Profile) |
+| `ss.profile.current()` / `ss.profile.set(name)` | read / switch the active profile (persisted) |
+| `ss.profile.onChange(fn)` | called with the profile name on every switch |
+| `ss.menubar.item(title, fn)` → `{setTitle, setChecked}` | add a custom menubar entry |
+| `ss.menubar.setTitle(str)` | change the menubar icon/text |
 | `ss.json.decode(str)` | JSON → Lua table |
 | `ss.fs.glob(dir, regex)` | list matching files, newest first |
 | `ss.fs.remove(path)` | delete a file |

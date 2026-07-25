@@ -305,6 +305,59 @@ enum API {
         }
         lua_setfield(L, -2, "notify")
 
+        // ---- ss.profile ----
+        vm.beginTable()
+        vm.setField("add") { vm in
+            if let name = vm.string(at: 1) { appDelegate?.addProfile(name) }
+            return 0
+        }
+        vm.setField("current") { vm in
+            vm.push(appDelegate?.activeProfile ?? "default")
+            return 1
+        }
+        vm.setField("set") { vm in
+            if let name = vm.string(at: 1) { appDelegate?.switchProfile(to: name) }
+            return 0
+        }
+        vm.setField("onChange") { vm in
+            guard lua_type(vm.L, 1) == LUA_TFUNCTION else { return 0 }
+            lua_pushvalue(vm.L, 1)
+            let fnRef = vm.ref()
+            appDelegate?.profileChangeHandlers.append { name in
+                vm.callRef(fnRef) { vm in
+                    vm.push(name)
+                    return 1
+                }
+            }
+            return 0
+        }
+        lua_setfield(L, -2, "profile")
+
+        // ---- ss.menubar ----
+        vm.beginTable()
+        vm.setField("item") { vm in
+            guard let title = vm.string(at: 1), lua_type(vm.L, 2) == LUA_TFUNCTION else { return 0 }
+            lua_pushvalue(vm.L, 2)
+            let fnRef = vm.ref()
+            guard let item = appDelegate?.addLuaMenuItem(title: title, handler: { vm.callRef(fnRef) }) else { return 0 }
+            vm.beginTable()
+            vm.setField("setTitle") { vm in
+                if let t = vm.string(at: 1) ?? vm.string(at: 2) { item.title = t }
+                return 0
+            }
+            vm.setField("setChecked") { vm in
+                let on = lua_toboolean(vm.L, 1) != 0 || lua_toboolean(vm.L, 2) != 0
+                item.state = on ? .on : .off
+                return 0
+            }
+            return 1
+        }
+        vm.setField("setTitle") { vm in
+            if let t = vm.string(at: 1) { appDelegate?.setStatusTitle(t) }
+            return 0
+        }
+        lua_setfield(L, -2, "menubar")
+
         vm.setGlobalTable("ss")
 
         // Alias for familiarity / partial Hammerspoon compatibility.

@@ -4,18 +4,81 @@ import Foundation
 let configDir = ("~/.config/shitty-shortcuts" as NSString).expandingTildeInPath
 let configPath = configDir + "/init.lua"
 
+// NSMenuItem that runs a Swift closure.
+final class ClosureMenuItem: NSMenuItem {
+    var handler: (() -> Void)?
+    @objc func invoke(_ sender: Any?) { handler?() }
+}
+
+var appDelegate: AppDelegate?
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem!
     var vm: LuaVM?
+    var menu: NSMenu!
+    private var luaMenuItems: [NSMenuItem] = []
+    private var luaSectionSeparator: NSMenuItem!
+    private var profileMenuItem: NSMenuItem!
+
+    // -- profiles --------------------------------------------------------------
+
+    private(set) var profiles: [String] = []
+    var profileChangeHandlers: [(String) -> Void] = []
+
+    var activeProfile: String {
+        get { UserDefaults.standard.string(forKey: "activeProfile") ?? profiles.first ?? "default" }
+        set { UserDefaults.standard.set(newValue, forKey: "activeProfile") }
+    }
+
+    func resetProfiles() {
+        profiles.removeAll()
+        profileChangeHandlers.removeAll()
+        profileMenuItem.submenu?.removeAllItems()
+        profileMenuItem.isHidden = true
+    }
+
+    func addProfile(_ name: String) {
+        guard !profiles.contains(name) else { return }
+        profiles.append(name)
+        profileMenuItem.isHidden = false
+        let item = ClosureMenuItem(title: name, action: #selector(ClosureMenuItem.invoke(_:)), keyEquivalent: "")
+        item.target = item
+        item.handler = { [weak self] in self?.switchProfile(to: name) }
+        profileMenuItem.submenu?.addItem(item)
+        refreshProfileChecks()
+    }
+
+    func switchProfile(to name: String, announce: Bool = true) {
+        guard profiles.contains(name) else { return }
+        activeProfile = name
+        refreshProfileChecks()
+        for handler in profileChangeHandlers { handler(name) }
+        if announce { Alert.show("profile: " + name, duration: 1.2) }
+    }
+
+    private func refreshProfileChecks() {
+        for case let item as NSMenuItem in profileMenuItem.submenu?.items ?? [] {
+            item.state = item.title == activeProfile ? .on : .off
+        }
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.title = "💩⌨️"
 
         let menu = NSMenu()
+        self.menu = menu
+
+        profileMenuItem = NSMenuItem(title: "Profile", action: nil, keyEquivalent: "")
+        let profileMenu = NSMenu(title: "Profile")
+        profileMenuItem.submenu = profileMenu
+        menu.addItem(profileMenuItem)
+        menu.addItem(.separator())
+
         menu.addItem(NSMenuItem(title: "Reload Config", action: #selector(reloadConfig), keyEquivalent: "r"))
         menu.addItem(NSMenuItem(title: "Edit Config", action: #selector(editConfig), keyEquivalent: "e"))
-        menu.addItem(.separator())
+        luaSectionSeparator = NSMenuItem.separator()
+        menu.addItem(luaSectionSeparator)
 
         let micItem = NSMenuItem(title: "Microphone", action: nil, keyEquivalent: "")
         let micMenu = NSMenu(title: "Microphone")
@@ -31,8 +94,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         loadConfig()
     }
 
+    // -- lua-scriptable menubar items -----------------------------------------
+
+    func clearLuaMenuItems() {
+        for item in luaMenuItems { menu.removeItem(item) }
+        luaMenuItems.removeAll()
+    }
+
+    func addLuaMenuItem(title: String, handler: @escaping () -> Void) -> ClosureMenuItem {
+        let item = ClosureMenuItem(title: title, action: #selector(ClosureMenuItem.invoke(_:)), keyEquivalent: "")
+        item.target = item
+        item.handler = handler
+        let index = menu.index(of: luaSectionSeparator) + 1 + luaMenuItems.count
+        menu.insertItem(item, at: index)
+        luaMenuItems.append(item)
+        return item
+    }
+
+    func setStatusTitle(_ title: String) {
+        statusItem.button?.title = title
+    }
+
     func loadConfig() {
         Hotkeys.shared.unbindAll()
+        clearLuaMenuItems()
+        resetProfiles()
+        statusItem.button?.title = "\u{1F4A9}\u{2328}\u{FE0F}"
         vm = LuaVM()
         API.register(vm: vm!)
 
@@ -42,7 +129,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         if vm!.doFile(configPath) {
-            Alert.show("💩⌨️ config loaded", duration: 1.5)
+            // fire the change handlers once so the config syncs to the
+            // persisted profile right after load
+            if !profiles.isEmpty {
+                switchProfile(to: activeProfile, announce: false)
+            }
+            Alert.show("\u{1F4A9}\u{2328}\u{FE0F} config loaded", duration: 1.5)
         }
     }
 
@@ -92,5 +184,6 @@ extension AppDelegate: NSMenuDelegate {
 let app = NSApplication.shared
 app.setActivationPolicy(.accessory)
 let delegate = AppDelegate()
+appDelegate = delegate
 app.delegate = delegate
 app.run()
