@@ -87,6 +87,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let fallback = profiles.first { switchProfile(to: fallback) }
     }
 
+    @objc func renameProfileAction() {
+        let oldName = activeProfile
+        guard userProfiles.contains(oldName) else {
+            Alert.show("'" + oldName + "' is defined by the config - rename it there")
+            return
+        }
+        let alert = NSAlert()
+        alert.messageText = "Rename Profile"
+        alert.informativeText = "New name for \u{201C}" + oldName + "\u{201D}. Remember to update any ss.profile.current() checks in your config."
+        alert.addButton(withTitle: "Rename")
+        alert.addButton(withTitle: "Cancel")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        field.stringValue = oldName
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        NSApp.activate(ignoringOtherApps: true)
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let newName = field.stringValue.trimmingCharacters(in: .whitespaces)
+        guard !newName.isEmpty, newName != oldName, !profiles.contains(newName) else { return }
+        userProfiles = userProfiles.map { $0 == oldName ? newName : $0 }
+        switchProfile(to: newName)
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.title = "💩⌨️"
@@ -200,6 +223,9 @@ extension AppDelegate: NSMenuDelegate {
             newItem.target = self
             menu.addItem(newItem)
             if userProfiles.contains(activeProfile) {
+                let ren = NSMenuItem(title: "Rename \u{201C}" + activeProfile + "\u{201D}...", action: #selector(renameProfileAction), keyEquivalent: "")
+                ren.target = self
+                menu.addItem(ren)
                 let del = NSMenuItem(title: "Delete \u{201C}" + activeProfile + "\u{201D}", action: #selector(deleteProfileAction), keyEquivalent: "")
                 del.target = self
                 menu.addItem(del)
