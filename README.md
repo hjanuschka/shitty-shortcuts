@@ -67,6 +67,19 @@ Put your config at `~/.config/shitty-shortcuts/init.lua`
 
 ## Samples
 
+### Focus-or-create a tab (never duplicate Gmail again)
+
+```lua
+ss.hotkey.bind(hyper, "g", function()
+  ss.task.new(chrome, nil, {
+    "--focus=https://mail.google.com/*",   -- focus existing tab (MRU, any window)
+    "https://mail.google.com",             -- ...or open it if missing
+  }):start()
+end)
+```
+
+Full sample: [examples/focus-or-create-tab.lua](examples/focus-or-create-tab.lua)
+
 ### Jump to web apps (Chrome 143+)
 
 Uses Chrome's `--focus` flag: focuses the existing tab if one matches,
