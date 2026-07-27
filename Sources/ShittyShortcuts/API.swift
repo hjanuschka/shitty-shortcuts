@@ -219,6 +219,10 @@ enum API {
             }
             return 1
         }
+        vm.setField("frontmost") { vm in
+            vm.push(NSWorkspace.shared.frontmostApplication?.localizedName ?? "")
+            return 1
+        }
         lua_setfield(L, -2, "application")
 
         // ---- ss.audiodevice ----
