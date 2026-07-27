@@ -166,6 +166,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func loadConfig() {
         Hotkeys.shared.unbindAll()
+        API.terminateAllTasks()
         clearLuaMenuItems()
         resetProfiles()
         statusItem.button?.title = "\u{1F4A9}\u{2328}\u{FE0F}"

@@ -11,6 +11,20 @@ enum API {
     private static var timers: [Int: Timer] = [:]
     private static var nextTimerId = 0
 
+    // Kill every process the previous config spawned - reloads must not
+    // leak recorders or other long-running children (they'd hold the mic).
+    static func terminateAllTasks() {
+        for (_, process) in tasks where process.isRunning {
+            process.interrupt()
+            let proc = process
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                if proc.isRunning { proc.terminate() }
+            }
+        }
+        tasks.removeAll()
+        taskOutputs.removeAll()
+    }
+
     static func register(vm: LuaVM) {
         let L = vm.L
         lua_createtable(L, 0, 12)
