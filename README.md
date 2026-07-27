@@ -145,6 +145,22 @@ tool output - and hold-to-talk voice dictation straight into pi's editor.
 
 See [examples/pi-micro-mode.lua](examples/pi-micro-mode.lua).
 
+### Context-aware controls
+
+The knob means different things depending on what's in front:
+Chrome -> cycle tabs, kitty -> cycle kitty/zellij tabs, elsewhere -> volume.
+
+```lua
+local function knobTurn(direction)
+  local front = ss.application.frontmost()
+  if front == "Google Chrome" then chromeCycleTab(direction)
+  elseif front == "kitty" then kittyOrZellijTab(direction)
+  else volumeDelta(direction * 6) end
+end
+```
+
+Full sample: [examples/context-aware-knob.lua](examples/context-aware-knob.lua)
+
 More in [examples/](examples/).
 
 ## API reference
@@ -162,6 +178,7 @@ Everything lives under the global `ss` (aliased as `hs`):
 | `ss.timer.waitUntil(predFn, actionFn[, interval])` | poll until predicate is true |
 | `ss.timer.secondsSinceEpoch()` | high-resolution clock |
 | `ss.application.launchOrFocus(name)` | activate or launch an app |
+| `ss.application.frontmost()` | name of the frontmost app (for context-aware bindings) |
 | `ss.audiodevice.inputDeviceNames()` | list audio input device names |
 | `ss.audiodevice.selectedInput()` | mic chosen in menubar > Microphone (nil if unset/disconnected) |
 | `ss.settings.get(key)` / `ss.settings.set(key, value)` | persistent key/value store (UserDefaults) |
